@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚾ 野球クイズ</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', 'Yu Gothic', sans-serif;
+      background: linear-gradient(160deg, #145a20 0%, #1e7a2c 60%, #145a20 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px 12px 40px;
+    }
+
+    .container { width: 100%; max-width: 600px; }
+
+    /* ---- Header ---- */
+    header { text-align: center; margin-bottom: 18px; }
+
+    header h1 {
+      color: #fff;
+      font-size: 26px;
+      font-weight: bold;
+      text-shadow: 1px 2px 4px rgba(0,0,0,0.4);
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .progress-wrap {
+      background: rgba(255,255,255,0.25);
+      border-radius: 99px;
+      height: 10px;
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #ffd700;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-text {
+      color: rgba(255,255,255,0.92);
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 24px 20px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+    }
+
+    /* ---- Quiz screen ---- */
+    .q-label {
+      display: inline-block;
+      background: #145a20;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      line-height: 1.65;
+      color: #1a1a1a;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    /* ---- Choices ---- */
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+
+    .choice-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border: 2px solid #dde0e4;
+      border-radius: 12px;
+      background: #f7f8fa;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+      color: #222;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      border-color: #145a20;
+      background: #eef6f0;
+    }
+
+    .choice-btn.selected {
+      border-color: #1a56db;
+      background: #e8f0fe;
+    }
+
+    .choice-btn.result-correct {
+      border-color: #1e8c34;
+      background: #d4f0db;
+      color: #0d4d1c;
+      font-weight: bold;
+    }
+
+    .choice-btn.result-wrong {
+      border-color: #c0392b;
+      background: #fde8e6;
+      color: #7a1a13;
+    }
+
+    .choice-btn:disabled { cursor: default; }
+
+    .choice-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #dde0e4;
+      font-size: 13px;
+      font-weight: bold;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+      color: #555;
+    }
+
+    .choice-btn.selected .choice-label {
+      background: #1a56db;
+      color: #fff;
+    }
+
+    .choice-btn.result-correct .choice-label {
+      background: #1e8c34;
+      color: #fff;
+    }
+
+    .choice-btn.result-wrong .choice-label {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    /* ---- Feedback ---- */
+    .feedback {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.7;
+      display: none;
+    }
+
+    .feedback.correct {
+      display: block;
+      background: #d4f0db;
+      border: 2px solid #1e8c34;
+      color: #0d4d1c;
+    }
+
+    .feedback.incorrect {
+      display: block;
+      background: #fde8e6;
+      border: 2px solid #c0392b;
+      color: #7a1a13;
+    }
+
+    .feedback-result {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-confirm {
+      background: #145a20;
+      color: #fff;
+    }
+
+    .btn-confirm:hover:not(:disabled) { background: #0e4118; }
+
+    .btn-confirm:disabled {
+      background: #b0b8be;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-next {
+      background: #1a56db;
+      color: #fff;
+      display: none;
+    }
+
+    .btn-next:hover { background: #1443b0; }
+
+    /* ---- Result screen ---- */
+    #result-screen { display: none; }
+
+    .result-inner { text-align: center; }
+
+    .result-icon { font-size: 68px; margin-bottom: 10px; }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .score-number {
+      font-size: 56px;
+      font-weight: bold;
+      color: #145a20;
+      line-height: 1;
+    }
+
+    .score-denom { font-size: 28px; color: #555; font-weight: bold; }
+
+    .score-suffix {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .score-msg {
+      font-size: 18px;
+      font-weight: bold;
+      color: #145a20;
+      margin-bottom: 18px;
+    }
+
+    .send-status {
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .send-status.sending { background: #fff8e1; color: #7a5c00; }
+    .send-status.success { background: #d4f0db; color: #0d4d1c; }
+    .send-status.error   { background: #fde8e6; color: #7a1a13; }
+
+    .btn-restart {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    .btn-restart:hover { background: #a93226; }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 400px) {
+      header h1 { font-size: 22px; }
+      .card { padding: 18px 14px; }
+      .q-text { font-size: 16px; }
+      .choice-btn { font-size: 14px; padding: 12px 12px; }
+      .btn { font-size: 17px; }
+      .score-number { font-size: 44px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>⚾ 野球クイズ</h1>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progressText">1 / 5</div>
+  </header>
+
+  <!-- ===== Quiz Screen ===== -->
+  <div id="quiz-screen">
+    <div class="card">
+      <div class="q-label" id="qLabel">第 1 問</div>
+      <p class="q-text" id="qText"></p>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn btn-confirm" id="confirmBtn" onclick="confirmAnswer()" disabled>
+        ✅ 決定
+      </button>
+      <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()">
+        次の問題へ →
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== Result Screen ===== -->
+  <div id="result-screen">
+    <div class="card result-inner">
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <div class="result-title">クイズ終了！</div>
+      <div>
+        <span class="score-number" id="scoreNum">0</span>
+        <span class="score-denom" id="scoreDenom">/ 5</span>
+      </div>
+      <div class="score-suffix">正解</div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <div class="send-status sending" id="sendStatus">
+        <span>📤</span><span>結果を送信中…</span>
+      </div>
+      <button class="btn btn-restart" onclick="restartQuiz()">🔄 もう一度挑戦！</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// =============================================================
+//  ★ 設定：GAS WebアプリのURLをここに貼り付けてください ★
+// =============================================================
+const ENDPOINT_URL = "YOUR_GAS_WEBAPP_URL_HERE";
+
+// =============================================================
+//  クイズデータ
+//  { id, question, choices: [...], answerIndex, explanation }
+// =============================================================
+const QUIZ = [
+  {
+    id: 1,
+    question: "野球で「ストライク」が3つたまったらどうなる？",
+    choices: [
+      "ランナーになれる",
+      "バッターがアウトになる（三振）",
+      "もう1回チャンスがもらえる",
+      "相手チームに1点入る"
+    ],
+    answerIndex: 1,
+    explanation: "ストライクが3つで「三振」！ バッターはアウトになります。ストライクゾーンに来たボールをうまく打ち返そう！"
+  },
+  {
+    id: 2,
+    question: "バッターがボール（ストライクゾーンを外れた球）を4つ受けると、どこの塁に進める？",
+    choices: [
+      "1塁",
+      "2塁",
+      "3塁",
+      "ホームベース（得点！）"
+    ],
+    answerIndex: 0,
+    explanation: "ボールを4球受けると「フォアボール（四球）」で1塁に出塁できます。ボール球を見極める目を鍛えよう！"
+  },
+  {
+    id: 3,
+    question: "ランナーがいない状態でホームランを打ったとき、何点入る？",
+    choices: [
+      "2点",
+      "4点",
+      "1点",
+      "0点"
+    ],
+    answerIndex: 2,
+    explanation: "ランナーなしのときはバッターだけがホームを踏むので1点。これを「ソロホームラン」といいます。満塁（ランナー3人）なら4点の「満塁ホームラン」！"
+  },
+  {
+    id: 4,
+    question: "1アウトで3塁にランナーがいます。外野にフライを打ちました。「タッチアップ」でランナーが得点するには、いつ3塁を離れればよい？",
+    choices: [
+      "フライが上がった瞬間に走り出す",
+      "外野手がボールをキャッチした瞬間から走る",
+      "ピッチャーがボールを受け取った後に走る",
+      "バッターが打席を離れてから走る"
+    ],
+    answerIndex: 1,
+    explanation: "タッチアップは、外野手がフライをキャッチした後に塁を離れて進塁するプレー。キャッチ前に走り出すと塁に戻らなければなりません！深いフライの時に使える大事な作戦だよ。"
+  },
+  {
+    id: 5,
+    question: "ノーアウトで1塁にランナーがいるとき、「送りバント」をする一番の目的は何？",
+    choices: [
+      "ピッチャーを疲れさせるため",
+      "アウトカウントを減らすため",
+      "バッターが1塁にセーフで出るため",
+      "ランナーを2塁に進めるため"
+    ],
+    answerIndex: 3,
+    explanation: "送りバントは、自分がアウトになってもランナーを次の塁に進める「つなぎの作戦」。チームのために自分を犠牲にする、野球の大切なチームプレーです！"
+  }
+];
+
+// =============================================================
+//  状態管理
+// =============================================================
+let sessionId   = generateUUID();
+let currentIdx  = 0;
+let selectedIdx = null;
+let answered    = false;
+let answers     = [];   // 5問分を蓄積
+
+// =============================================================
+//  UUID 生成
+// =============================================================
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// =============================================================
+//  問題表示
+// =============================================================
+function showQuestion(idx) {
+  const q = QUIZ[idx];
+  selectedIdx = null;
+  answered    = false;
+
+  document.getElementById('qLabel').textContent = `第 ${idx + 1} 問`;
+  document.getElementById('qText').textContent  = q.question;
+
+  // 進捗
+  document.getElementById('progressText').textContent = `${idx + 1} / ${QUIZ.length}`;
+  document.getElementById('progressBar').style.width  = `${(idx / QUIZ.length) * 100}%`;
+
+  // 選択肢
+  const labels   = ['Ａ', 'Ｂ', 'Ｃ', 'Ｄ'];
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.onclick   = () => selectChoice(i);
+    btn.innerHTML =
+      `<span class="choice-label">${labels[i]}</span>` +
+      `<span>${text}</span>`;
+    choicesEl.appendChild(btn);
+  });
+
+  // フィードバック非表示
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.innerHTML = '';
+
+  // ボタン状態
+  const confirmBtn = document.getElementById('confirmBtn');
+  confirmBtn.disabled = true;
+  confirmBtn.style.display = 'block';
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.style.display = 'none';
+}
+
+// =============================================================
+//  選択肢クリック
+// =============================================================
+function selectChoice(idx) {
+  if (answered) return;
+  selectedIdx = idx;
+
+  document.querySelectorAll('.choice-btn').forEach((btn, i) => {
+    btn.className = 'choice-btn' + (i === idx ? ' selected' : '');
+  });
+
+  document.getElementById('confirmBtn').disabled = false;
+}
+
+// =============================================================
+//  決定ボタン
+// =============================================================
+function confirmAnswer() {
+  if (selectedIdx === null || answered) return;
+  answered = true;
+
+  const q         = QUIZ[currentIdx];
+  const isCorrect = (selectedIdx === q.answerIndex);
+
+  // 選択肢のスタイルを更新
+  document.querySelectorAll('.choice-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    btn.onclick  = null;
+    let cls = 'choice-btn';
+    if (i === q.answerIndex)                 cls += ' result-correct';
+    else if (i === selectedIdx && !isCorrect) cls += ' result-wrong';
+    btn.className = cls;
+  });
+
+  // フィードバック
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    fb.className = 'feedback correct';
+    fb.innerHTML =
+      `<div class="feedback-result">🎉 正解！</div>` +
+      `<div>${q.explanation}</div>`;
+  } else {
+    fb.className = 'feedback incorrect';
+    fb.innerHTML =
+      `<div class="feedback-result">❌ 不正解…</div>` +
+      `<div>正解は「${q.choices[q.answerIndex]}」でした。<br>${q.explanation}</div>`;
+  }
+
+  // 回答を記録
+  answers.push({
+    question_id:    q.id,
+    question_text:  q.question,
+    selected:       q.choices[selectedIdx],
+    correct_answer: q.choices[q.answerIndex],
+    is_correct:     isCorrect
+  });
+
+  // ボタン切替
+  document.getElementById('confirmBtn').style.display = 'none';
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent =
+    currentIdx === QUIZ.length - 1 ? '結果を見る 🏆' : '次の問題へ →';
+}
+
+// =============================================================
+//  次の問題
+// =============================================================
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= QUIZ.length) {
+    showResult();
+  } else {
+    showQuestion(currentIdx);
+  }
+}
+
+// =============================================================
+//  結果表示
+// =============================================================
+function showResult() {
+  document.getElementById('progressBar').style.width  = '100%';
+  document.getElementById('progressText').textContent = `${QUIZ.length} / ${QUIZ.length}`;
+
+  const score = answers.filter(a => a.is_correct).length;
+
+  document.getElementById('quiz-screen').style.display    = 'none';
+  document.getElementById('result-screen').style.display  = 'block';
+  document.getElementById('scoreNum').textContent          = score;
+  document.getElementById('scoreDenom').textContent        = `/ ${QUIZ.length}`;
+
+  let icon, msg;
+  if (score === QUIZ.length) {
+    icon = '🏆'; msg = '全問正解！野球博士だ！';
+  } else if (score >= 4) {
+    icon = '⭐'; msg = 'すごい！あと少しで完璧！';
+  } else if (score >= 3) {
+    icon = '😊'; msg = 'よくできました！';
+  } else if (score >= 1) {
+    icon = '💪'; msg = 'もっと練習してまた挑戦しよう！';
+  } else {
+    icon = '😅'; msg = 'ドンマイ！次は頑張ろう！';
+  }
+  document.getElementById('resultIcon').textContent = icon;
+  document.getElementById('scoreMsg').textContent   = msg;
+
+  sendData(score);
+}
+
+// =============================================================
+//  データ送信（全問終了時に5問分まとめて POST）
+// =============================================================
+async function sendData(totalScore) {
+  const statusEl = document.getElementById('sendStatus');
+
+  if (!ENDPOINT_URL || ENDPOINT_URL === 'YOUR_GAS_WEBAPP_URL_HERE') {
+    statusEl.className   = 'send-status error';
+    statusEl.innerHTML   =
+      '<span>⚠️</span><span>ENDPOINT_URL が未設定です。index.html 冒頭の定数を確認してください。</span>';
+    return;
+  }
+
+  const timestamp = new Date().toISOString();
+  const payload   = answers.map(a => ({
+    timestamp:      timestamp,
+    session_id:     sessionId,
+    question_id:    a.question_id,
+    question_text:  a.question_text,
+    selected:       a.selected,
+    correct_answer: a.correct_answer,
+    is_correct:     a.is_correct,
+    total_score:    totalScore
+  }));
+
+  statusEl.className = 'send-status sending';
+  statusEl.innerHTML = '<span>📤</span><span>結果を送信中…</span>';
+
+  try {
+    const res = await fetch(ENDPOINT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },   // プリフライトを回避
+      body:    JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    statusEl.className = 'send-status success';
+    statusEl.innerHTML = '<span>✅</span><span>結果を送信しました！</span>';
+  } catch (err) {
+    statusEl.className = 'send-status error';
+    statusEl.innerHTML =
+      `<span>❌</span><span>送信に失敗しました。ENDPOINT_URL の設定を確認してください。（${err.message}）</span>`;
+  }
+}
+
+// =============================================================
+//  やり直し
+// =============================================================
+function restartQuiz() {
+  sessionId   = generateUUID();
+  currentIdx  = 0;
+  selectedIdx = null;
+  answered    = false;
+  answers     = [];
+
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display   = 'block';
+  showQuestion(0);
+}
+
+// =============================================================
+//  初期化
+// =============================================================
+showQuestion(0);
+</script>
+</body>
+</html>
