@@ -609,21 +609,21 @@ async function sendData(totalScore) {
   statusEl.className = 'send-status sending';
   statusEl.innerHTML = '<span>📤</span><span>結果を送信中…</span>';
 
-  try {
-    const res = await fetch(ENDPOINT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },   // プリフライトを回避
-      body:    JSON.stringify(payload)
+try {
+    await fetch(ENDPOINT_URL, {
+      method: 'POST',
+      mode: 'no-cors',                              // GASへはno-corsで送る
+      headers: { 'Content-Type': 'text/plain' },    // プリフライト回避
+      body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // no-corsでは応答(opaque)を読めないため、res.okでは判定しない
     statusEl.className = 'send-status success';
     statusEl.innerHTML = '<span>✅</span><span>結果を送信しました！</span>';
   } catch (err) {
     statusEl.className = 'send-status error';
     statusEl.innerHTML =
-      `<span>❌</span><span>送信に失敗しました。ENDPOINT_URL の設定を確認してください。（${err.message}）</span>`;
+      `<span>❌</span><span>送信に失敗しました。（${err.message}）</span>`;
   }
-}
 
 // =============================================================
 //  やり直し
